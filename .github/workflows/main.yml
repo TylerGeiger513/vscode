@@ -1,10 +1,10 @@
-name: Count Lines and Comments
+name: Count Lines, Comments, and Test Lines
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows you to run manually
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   count-lines:
@@ -18,11 +18,20 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cloc
 
-    - name: Count lines and comments
+    - name: Count lines, comments, and test lines
       run: |
         echo "Analyzing the project..."
-        cloc --by-file --include-lang=Python,JavaScript,HTML,CSS . | tee cloc_output.txt
-        TOTAL_LINES=$(awk 'END{print $1}' cloc_output.txt)
-        TOTAL_COMMENTS=$(awk 'END{print $3}' cloc_output.txt)
+        
+        # Count total lines and comments
+        cloc . --json > cloc_output.json
+        TOTAL_LINES=$(jq '.SUM.code' cloc_output.json)
+        TOTAL_COMMENTS=$(jq '.SUM.comment' cloc_output.json)
+
+        # Count lines in test files
+        cloc . --json --match-d=".*[Tt]ests?.*" --match-f=".*[Tt]ests?.*" > cloc_tests_output.json
+        TEST_LINES=$(jq '.SUM.code' cloc_tests_output.json)
+
+        # Output results
         echo "Total lines of code: $TOTAL_LINES"
         echo "Total comments: $TOTAL_COMMENTS"
+        echo "Total lines in test files: $TEST_LINES"
