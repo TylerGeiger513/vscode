@@ -1,0 +1,28 @@
+name: Count Lines and Comments
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows you to run manually
+
+jobs:
+  count-lines:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cloc
+
+    - name: Count lines and comments
+      run: |
+        echo "Analyzing the project..."
+        cloc --by-file --include-lang=Python,JavaScript,HTML,CSS . | tee cloc_output.txt
+        TOTAL_LINES=$(awk 'END{print $1}' cloc_output.txt)
+        TOTAL_COMMENTS=$(awk 'END{print $3}' cloc_output.txt)
+        echo "Total lines of code: $TOTAL_LINES"
+        echo "Total comments: $TOTAL_COMMENTS"
